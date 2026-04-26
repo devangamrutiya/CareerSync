@@ -1,0 +1,13 @@
+# Render Blueprint: deploy the NestJS API from the monorepo `server/` folder.
+# https://render.com/docs/blueprint-spec
+#
+# If you already created a Web Service manually, set Root Directory to `server`
+# in the service Settings instead of relying on this file alone.
+
+services:
+  - type: web
+    name: aitool-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
