@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?  
+  provider  String   @default("manual")
+  createdAt DateTime @default(now())
+
+  googleRefreshToken String?
+  googleConnectedAt  DateTime?
+
+  jobs       Job[]
+  resumes    Resume[]
+  resumeRuns ResumeRun[]
+}
+
+model Job {
+  id              String   @id @default(uuid())
+  companyName     String
+  jobTitle        String
+  status          String   @default("Applied")
+  appliedDate     DateTime @default(now())
+  sourceEmailId   String?  
+
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceEmailId])
+}
+
+model Resume {
+  id              String   @id @default(uuid())
+  originalFileUrl String
+  updatedFileUrl  String?
+  createdAt       DateTime @default(now())
+
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Resume Optimizer V2 Pipeline ─────────────────────────
+
+model ResumeRun {
+  id                    String   @id @default(uuid())
+  status                String   @default("uploaded")
+  originalResumeFileUrl String
+  originalJdText        String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parsedResume         ParsedResume?
+  parsedJobDescription ParsedJobDescription?
+  analysisResult       AnalysisResult?
+  suggestion           Suggestion?
+  finalResume          FinalResume?
+}
+
+model ParsedResume {
+  id    String    @id @default(uuid())
+  runId String    @unique
+  run   ResumeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  data  Json
+}
+
+model ParsedJobDescription {
+  id    String    @id @default(uuid())
+  runId String    @unique
+  run   ResumeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  data  Json
+}
+
+model AnalysisResult {
+  id    String    @id @default(uuid())
+  runId String    @unique
+  run   ResumeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  data  Json
+}
+
+model Suggestion {
+  id    String    @id @default(uuid())
+  runId String    @unique
+  run   ResumeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  data  Json
+}
+
+model FinalResume {
+  id      String    @id @default(uuid())
+  runId   String    @unique
+  run     ResumeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  data    Json
+  html    String?
+  pdfUrl  String?
+  docxUrl String?
+}
