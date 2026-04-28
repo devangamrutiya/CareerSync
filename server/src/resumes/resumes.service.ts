@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as pdfParseModule from 'pdf-parse';
 import mammoth from 'mammoth';
-import puppeteer from 'puppeteer';
+import PDFDocument from 'pdfkit';
 
 export type OptimizedResumeInput = {
   userId: string;
@@ -127,24 +127,74 @@ ${html}
 </html>`;
 }
 
+function normalizeLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 async function renderMarkdownToPdfBytes(text: string): Promise<Buffer> {
-  const html = markdownToHtml(text);
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
+  // Generate a simple, ATS-friendly PDF without requiring a browser runtime.
+  const lines = text.split(/\r?\n/);
+  return new Promise<Buffer>((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 40, right: 50, bottom: 40, left: 50 },
+      info: { Title: 'Optimized Resume' },
     });
-    return Buffer.from(pdfBuffer);
-  } finally {
-    await browser.close();
-  }
+    const chunks: Buffer[] = [];
+
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) {
+        doc.moveDown(0.5);
+        continue;
+      }
+
+      if (line.startsWith('# ')) {
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(20)
+          .text(normalizeLine(line.slice(2)), { align: 'left' });
+        doc.moveDown(0.5);
+        continue;
+      }
+
+      if (line.startsWith('## ')) {
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(13)
+          .text(normalizeLine(line.slice(3)), { underline: true, align: 'left' });
+        doc.moveDown(0.4);
+        continue;
+      }
+
+      if (line.startsWith('### ')) {
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(11.5)
+          .text(normalizeLine(line.slice(4)), { align: 'left' });
+        doc.moveDown(0.25);
+        continue;
+      }
+
+      if (line.startsWith('* ') || line.startsWith('- ')) {
+        const bullet = normalizeLine(line.slice(2));
+        doc
+          .font('Helvetica')
+          .fontSize(11)
+          .text(`• ${bullet}`, { indent: 8, align: 'left' });
+        continue;
+      }
+
+      doc.font('Helvetica').fontSize(11).text(normalizeLine(line), { align: 'left' });
+      doc.moveDown(0.1);
+    }
+
+    doc.end();
+  });
 }
 
 @Injectable()
