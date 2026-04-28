@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
-import { getCorsOrigins, shouldTrustProxy } from './config/env';
+import { getCorsOrigins, isOriginAllowed, shouldTrustProxy } from './config/env';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,8 +26,21 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const allowedOrigins = getCorsOrigins();
+
   app.enableCors({
-    origin: getCorsOrigins(),
+    origin: (requestOrigin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!requestOrigin) {
+        return callback(null, true);
+      }
+
+      if (isOriginAllowed(requestOrigin, allowedOrigins)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: false,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],

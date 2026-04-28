@@ -24,8 +24,17 @@ async function bootstrap() {
         transform: true,
         forbidNonWhitelisted: true,
     }));
+    const allowedOrigins = (0, env_1.getCorsOrigins)();
     app.enableCors({
-        origin: (0, env_1.getCorsOrigins)(),
+        origin: (requestOrigin, callback) => {
+            if (!requestOrigin) {
+                return callback(null, true);
+            }
+            if ((0, env_1.isOriginAllowed)(requestOrigin, allowedOrigins)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'), false);
+        },
         credentials: false,
         allowedHeaders: ['Content-Type', 'Authorization'],
         methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],

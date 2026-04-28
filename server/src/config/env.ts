@@ -31,6 +31,24 @@ export function getCorsOrigins(): string[] {
   return origins.length > 0 ? origins : [DEFAULT_LOCAL_ORIGIN];
 }
 
+export function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
+  if (!origin) return false;
+
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === origin) {
+      return true;
+    }
+
+    if (allowedOrigin.includes('*')) {
+      const escaped = allowedOrigin.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`^${escaped.replace(/\\\*/g, '.*')}$`);
+      return regex.test(origin);
+    }
+
+    return false;
+  });
+}
+
 export function isGoogleOAuthConfigured(): boolean {
   return (
     Boolean(process.env.GOOGLE_CLIENT_ID?.trim()) &&

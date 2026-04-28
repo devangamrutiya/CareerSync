@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isProduction = isProduction;
 exports.getJwtSecret = getJwtSecret;
 exports.getCorsOrigins = getCorsOrigins;
+exports.isOriginAllowed = isOriginAllowed;
 exports.isGoogleOAuthConfigured = isGoogleOAuthConfigured;
 exports.shouldTrustProxy = shouldTrustProxy;
 const DEFAULT_LOCAL_ORIGIN = 'http://localhost:3000';
@@ -30,6 +31,21 @@ function getCorsOrigins() {
     const nextPublicWebOrigin = process.env.NEXT_PUBLIC_WEB_ORIGIN?.trim();
     const origins = [webOrigin, nextPublicWebOrigin].filter(Boolean);
     return origins.length > 0 ? origins : [DEFAULT_LOCAL_ORIGIN];
+}
+function isOriginAllowed(origin, allowedOrigins) {
+    if (!origin)
+        return false;
+    return allowedOrigins.some((allowedOrigin) => {
+        if (allowedOrigin === origin) {
+            return true;
+        }
+        if (allowedOrigin.includes('*')) {
+            const escaped = allowedOrigin.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`^${escaped.replace(/\\\*/g, '.*')}$`);
+            return regex.test(origin);
+        }
+        return false;
+    });
 }
 function isGoogleOAuthConfigured() {
     return (Boolean(process.env.GOOGLE_CLIENT_ID?.trim()) &&
