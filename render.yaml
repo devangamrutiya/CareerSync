@@ -9,5 +9,6 @@ services:
     name: aitool-server
     runtime: node
     rootDir: server
-    buildCommand: npm install && npm run build
+    # Render may install production-only deps by default; Nest build needs devDeps (@nestjs/cli).
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start:prod
