@@ -9,6 +9,7 @@ type AuthUser = {
 export declare class AuthService {
     private usersService;
     private jwtService;
+    private readonly logger;
     constructor(usersService: UsersService, jwtService: JwtService);
     private buildAuthResponse;
     issueToken(user: AuthUser): {

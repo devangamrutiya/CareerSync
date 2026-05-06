@@ -11,6 +11,7 @@ Rules:
 - Keep bullet points close to source wording where possible.
 - If a field is missing, return empty string or empty array.
 - Generate a unique id for each experience, project, education, and certification entry (use format exp_1, exp_2, proj_1, proj_2, edu_1, cert_1, etc).
+- All string values must be plain text for ATS parsers: no markdown (no # headings, no **bold**, no [label](url) links — use the visible email or URL text only, no leading hash characters).
 
 Return ONLY valid JSON matching this exact schema:
 {

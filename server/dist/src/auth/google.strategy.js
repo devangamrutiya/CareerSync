@@ -32,7 +32,10 @@ let GoogleStrategy = class GoogleStrategy extends (0, passport_1.PassportStrateg
         this.usersService = usersService;
     }
     async validate(accessToken, refreshToken, profile, done) {
-        const { emails } = profile;
+        const emails = profile?.emails;
+        if (!Array.isArray(emails) || emails.length === 0 || !emails[0]?.value) {
+            return done(new Error('Google account has no email address'), false);
+        }
         const email = emails[0].value.trim().toLowerCase();
         let user = await this.usersService.findByEmail(email);
         if (!user) {

@@ -59,6 +59,8 @@ const analyze_gap_1 = require("./gemini/analyze-gap");
 const rewrite_resume_1 = require("./gemini/rewrite-resume");
 const validate_suggestions_1 = require("./gemini/validate-suggestions");
 const merge_accepted_changes_1 = require("./logic/merge-accepted-changes");
+const sanitize_resume_for_export_1 = require("./logic/sanitize-resume-for-export");
+const prioritize_skills_by_jd_1 = require("./logic/prioritize-skills-by-jd");
 const render_resume_html_1 = require("./render/render-resume-html");
 const export_pdf_1 = require("./render/export-pdf");
 const export_docx_1 = require("./render/export-docx");
@@ -131,7 +133,7 @@ let ResumeOptimizerService = ResumeOptimizerService_1 = class ResumeOptimizerSer
                 throw new common_1.BadRequestException('Could not extract text from resume');
             }
             this.logger.log(`[${run.id}] Parsing resume...`);
-            const parsedResume = await (0, parse_resume_1.parseResume)(resumeText);
+            const parsedResume = (0, sanitize_resume_for_export_1.sanitizeResumeForExport)(await (0, parse_resume_1.parseResume)(resumeText));
             await this.prisma.parsedResume.create({
                 data: { runId: run.id, data: parsedResume },
             });
@@ -247,7 +249,7 @@ let ResumeOptimizerService = ResumeOptimizerService_1 = class ResumeOptimizerSer
         if (!runData.resume || !runData.suggestions) {
             throw new common_1.BadRequestException('Run is not in a state where changes can be applied');
         }
-        const finalResume = (0, merge_accepted_changes_1.mergeAcceptedChanges)(runData.resume, runData.suggestions, accepted);
+        const finalResume = (0, sanitize_resume_for_export_1.sanitizeResumeForExport)((0, merge_accepted_changes_1.mergeAcceptedChanges)(runData.resume, runData.suggestions, accepted));
         const existing = await this.prisma.finalResume.findUnique({
             where: { runId },
         });
@@ -273,7 +275,7 @@ let ResumeOptimizerService = ResumeOptimizerService_1 = class ResumeOptimizerSer
         if (!runData.finalResume) {
             throw new common_1.BadRequestException('No final resume found. Apply changes first.');
         }
-        const resumeJson = runData.finalResume.data;
+        const resumeJson = (0, prioritize_skills_by_jd_1.prioritizeSkillsByJobKeywords)((0, sanitize_resume_for_export_1.sanitizeResumeForExport)(runData.finalResume.data), runData.jobDescription ?? undefined);
         const storageRoot = path.join(process.cwd(), 'uploads', 'resumes');
         fs.mkdirSync(storageRoot, { recursive: true });
         if (format === 'pdf') {

@@ -30,6 +30,8 @@ import {
   validateNoDateMutation,
 } from './gemini/validate-suggestions';
 import { mergeAcceptedChanges } from './logic/merge-accepted-changes';
+import { sanitizeResumeForExport } from './logic/sanitize-resume-for-export';
+import { prioritizeSkillsByJobKeywords } from './logic/prioritize-skills-by-jd';
 import { renderResumeHtml } from './render/render-resume-html';
 import { exportPdf } from './render/export-pdf';
 import { exportDocx } from './render/export-docx';
@@ -135,7 +137,9 @@ export class ResumeOptimizerService {
 
       // Step 2: Parse resume → ResumeJson
       this.logger.log(`[${run.id}] Parsing resume...`);
-      const parsedResume = await parseResume(resumeText);
+      const parsedResume = sanitizeResumeForExport(
+        await parseResume(resumeText),
+      );
       await this.prisma.parsedResume.create({
         data: { runId: run.id, data: parsedResume as any },
       });
@@ -287,10 +291,8 @@ export class ResumeOptimizerService {
       );
     }
 
-    const finalResume = mergeAcceptedChanges(
-      runData.resume,
-      runData.suggestions,
-      accepted,
+    const finalResume = sanitizeResumeForExport(
+      mergeAcceptedChanges(runData.resume, runData.suggestions, accepted),
     );
 
     // Upsert final resume
@@ -333,7 +335,10 @@ export class ResumeOptimizerService {
       );
     }
 
-    const resumeJson = runData.finalResume.data;
+    const resumeJson = prioritizeSkillsByJobKeywords(
+      sanitizeResumeForExport(runData.finalResume.data),
+      runData.jobDescription ?? undefined,
+    );
     const storageRoot = path.join(process.cwd(), 'uploads', 'resumes');
     fs.mkdirSync(storageRoot, { recursive: true });
 

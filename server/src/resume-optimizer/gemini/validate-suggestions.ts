@@ -14,12 +14,13 @@ Return warnings for:
 - unsupported metrics (numbers/percentages not in original)
 - unsupported certifications
 - changed job titles
+- markdown or non-plain text in suggested strings (e.g. # headings, **, [label](url)) — use severity low
 
 Return ONLY valid JSON matching this schema:
 {
   "warnings": [
     {
-      "type": "invented_skill" | "invented_tool" | "changed_date" | "changed_company" | "unsupported_metric" | "unsupported_certification" | "changed_title",
+      "type": "invented_skill" | "invented_tool" | "changed_date" | "changed_company" | "unsupported_metric" | "unsupported_certification" | "changed_title" | "markdown_artifact",
       "detail": string,
       "severity": "high" | "medium" | "low"
     }

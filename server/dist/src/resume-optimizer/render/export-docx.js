@@ -2,6 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportDocx = exportDocx;
 const docx_1 = require("docx");
+function displayUrl(raw) {
+    const t = raw.trim();
+    if (!t)
+        return t;
+    if (/^https?:\/\//i.test(t))
+        return t;
+    if (/^www\./i.test(t))
+        return `https://${t}`;
+    if (/^(linkedin\.com|github\.com|gitlab\.com)\b/i.test(t))
+        return `https://${t}`;
+    return t;
+}
 async function exportDocx(resume) {
     const children = [];
     children.push(new docx_1.Paragraph({
@@ -16,9 +28,11 @@ async function exportDocx(resume) {
     if (resume.basics.location)
         contactParts.push(resume.basics.location);
     if (resume.basics.linkedin)
-        contactParts.push(resume.basics.linkedin);
+        contactParts.push(displayUrl(resume.basics.linkedin));
     if (resume.basics.github)
-        contactParts.push(resume.basics.github);
+        contactParts.push(displayUrl(resume.basics.github));
+    if (resume.basics.portfolio)
+        contactParts.push(displayUrl(resume.basics.portfolio));
     if (contactParts.length) {
         children.push(new docx_1.Paragraph({ children: [new docx_1.TextRun({ text: contactParts.join(' | '), size: 18, color: '555555' })] }));
     }
@@ -59,15 +73,20 @@ async function exportDocx(resume) {
     if (resume.experience.length) {
         children.push(new docx_1.Paragraph({ text: 'Work Experience', heading: docx_1.HeadingLevel.HEADING_2 }));
         for (const exp of resume.experience) {
+            const dateRange = `${exp.startDate} – ${exp.current ? 'Present' : exp.endDate}`;
             children.push(new docx_1.Paragraph({
                 children: [
-                    new docx_1.TextRun({ text: `${exp.title} — ${exp.company}`, bold: true }),
-                    new docx_1.TextRun({ text: `  |  ${exp.startDate} – ${exp.current ? 'Present' : exp.endDate}`, color: '555555' }),
+                    new docx_1.TextRun({ text: exp.title, bold: true }),
+                    new docx_1.TextRun({ text: `  |  ${dateRange}`, color: '555555' }),
                 ],
             }));
+            const companyLine = [
+                new docx_1.TextRun({ text: exp.company, italics: true, color: '444444' }),
+            ];
             if (exp.location) {
-                children.push(new docx_1.Paragraph({ children: [new docx_1.TextRun({ text: exp.location, italics: true, color: '777777' })] }));
+                companyLine.push(new docx_1.TextRun({ text: `  ·  ${exp.location}`, italics: true, color: '666666' }));
             }
+            children.push(new docx_1.Paragraph({ children: companyLine }));
             for (const bullet of exp.bullets) {
                 children.push(new docx_1.Paragraph({ children: [new docx_1.TextRun({ text: bullet })], bullet: { level: 0 } }));
             }

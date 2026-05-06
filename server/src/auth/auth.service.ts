@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -12,6 +18,8 @@ type AuthUser = {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -34,13 +42,23 @@ export class AuthService {
   }
 
   async register(data: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const user = await this.usersService.create({
-      email: data.email.trim().toLowerCase(),
-      password: hashedPassword,
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      const user = await this.usersService.create({
+        email: data.email.trim().toLowerCase(),
+        password: hashedPassword,
+      });
 
-    return this.issueToken(user);
+      return this.issueToken(user);
+    } catch (error) {
+      this.logger.error('User registration failed', error as Error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Unable to create account. Please try again later.',
+      );
+    }
   }
 
   async login(credentials: LoginDto) {

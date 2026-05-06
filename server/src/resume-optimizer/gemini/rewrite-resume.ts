@@ -16,6 +16,8 @@ Rules:
 - Keep content concise and resume-appropriate.
 - Provide a clear reason for every change.
 - Return structured JSON only.
+- Every string you output must be plain ATS text: no markdown (#, ##, **, [text](url)), no leading hash characters.
+- In skillsSuggestion.suggested, order technical then tools so items that match the job description mustHaveSkills or keywords (when they already exist in the original resume) appear first; do not add skills that are not grounded in the original resume.
 
 Return ONLY valid JSON matching this exact schema:
 {

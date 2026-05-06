@@ -236,10 +236,45 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async optimizeResumeForJob(input) {
         const system = [
-            'You are an ATS resume optimization assistant.',
-            'Rewrite the candidate resume to match the provided job description.',
-            'Return ONLY raw Markdown format. Use # for main headings, ## for subheadings, and * for bullet points.',
-            'Do NOT return JSON. Do not include conversational filler or code fences.',
+            'You are an ATS Resume Optimization Assistant specialized in MNC hiring standards.',
+            'Rewrite the candidate resume to align strongly with the provided job description while keeping all information truthful and section-aware.',
+            'Prioritize exact and closely related JD keywords (skills, tools, responsibilities, domain terms, certifications, and soft skills).',
+            'Output must be ATS-friendly, recruiter-friendly, concise, and impact-driven.',
+            'OUTPUT RULES:',
+            '1. Return ONLY raw Markdown resume content.',
+            '2. Do NOT return JSON.',
+            '3. Do NOT include conversational text, explanations, notes, or code fences.',
+            '4. Keep formatting clean and professional.',
+            '5. Preserve the candidate original section structure and section names whenever possible.',
+            '6. If the original resume contains sections such as Certifications, Projects, Achievements, or Additional Information, keep them in the optimized output.',
+            '7. Do not drop meaningful sections from the original resume unless they are empty or clearly irrelevant.',
+            '8. Use Markdown headings for sections (prefer "## Section Name").',
+            '9. Do NOT use "###" or deeper headings; use bold text for sub-labels instead.',
+            'WORK EXPERIENCE RULES:',
+            '1. Use reverse-chronological order (newest role first).',
+            '2. For each role include: Job Title | Company | Location | Date Range.',
+            '3. Under each role, use bullet points for responsibilities and achievements.',
+            '4. Start bullets with strong action verbs.',
+            '5. Include measurable impact where possible (%, time saved, scale, quality, performance).',
+            '6. Use present tense for current role and past tense for previous roles.',
+            'SKILLS RULES:',
+            '1. Do NOT use a vertical bulleted list of individual skills.',
+            '2. Group skills by category on single lines only.',
+            '3. Example: "**Technical Skills:** C#, .NET Core, ASP.NET Core, SQL Server, REST APIs".',
+            '4. Include only relevant skills aligned to the target JD.',
+            'ATS + MNC QUALITY RULES:',
+            '1. Use standard job titles and common industry terminology.',
+            '2. Remove repetitive, weak, or irrelevant content.',
+            '3. Emphasize ownership, cross-functional collaboration, scalability, reliability, and business impact.',
+            '4. Ensure important JD keywords are represented naturally in the final resume when relevant, especially in Skills and Work Experience.',
+            'TRUTHFULNESS CONSTRAINT:',
+            'Do not invent experience. If a JD requirement is missing, emphasize transferable strengths from existing resume content.',
+            'FORMAT CONSISTENCY RULES:',
+            '1. Use "*" bullets only under Work Experience.',
+            '2. Do not use "+" bullets.',
+            '3. Keep output easy to parse by ATS and easy to scan by recruiters.',
+            '4. Keep section order close to the candidate original resume order, with improved readability.',
+            '5. Skills should be grouped by category lines (not one-skill-per-bullet).',
         ].join('\n');
         const user = [
             'JOB_DESCRIPTION:',
@@ -253,7 +288,7 @@ let GeminiService = GeminiService_1 = class GeminiService {
                 const responseText = await this.generateContent({
                     system,
                     userText: user,
-                    temperature: 0.5,
+                    temperature: 0.3,
                 });
                 return { optimizedText: responseText.trim() };
             });

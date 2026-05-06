@@ -6,6 +6,7 @@ import {
   Req,
   Res,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -45,6 +46,10 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: any, @Res() res: any) {
+    if (!req.user) {
+      throw new UnauthorizedException('Google authentication failed');
+    }
+
     const tokenRes = this.authService.issueToken(req.user);
     const webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3000';
     const redirectUrl = `${webOrigin}/dashboard?token=${encodeURIComponent(tokenRes.access_token)}`;

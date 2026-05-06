@@ -31,7 +31,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { emails } = profile;
+    const emails = profile?.emails;
+    if (!Array.isArray(emails) || emails.length === 0 || !emails[0]?.value) {
+      return done(new Error('Google account has no email address'), false);
+    }
+
     const email = emails[0].value.trim().toLowerCase();
     let user = await this.usersService.findByEmail(email);
 

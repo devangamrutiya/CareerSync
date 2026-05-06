@@ -5,37 +5,37 @@ export declare class JobsController {
     private jobsService;
     constructor(jobsService: JobsService);
     list(req: any): Promise<{
+        status: string;
         id: string;
         companyName: string;
         jobTitle: string;
-        status: string;
         appliedDate: Date;
         sourceEmailId: string | null;
         userId: string;
     }[]>;
     create(req: any, dto: CreateJobDto): Promise<{
+        status: string;
         id: string;
         companyName: string;
         jobTitle: string;
-        status: string;
         appliedDate: Date;
         sourceEmailId: string | null;
         userId: string;
     }>;
     get(req: any, id: string): Promise<{
+        status: string;
         id: string;
         companyName: string;
         jobTitle: string;
-        status: string;
         appliedDate: Date;
         sourceEmailId: string | null;
         userId: string;
     }>;
     update(req: any, id: string, dto: UpdateJobDto): Promise<{
+        status: string;
         id: string;
         companyName: string;
         jobTitle: string;
-        status: string;
         appliedDate: Date;
         sourceEmailId: string | null;
         userId: string;

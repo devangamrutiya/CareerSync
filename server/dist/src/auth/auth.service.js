@@ -41,15 +41,17 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("../users/users.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcryptjs"));
-let AuthService = class AuthService {
+let AuthService = AuthService_1 = class AuthService {
     usersService;
     jwtService;
+    logger = new common_1.Logger(AuthService_1.name);
     constructor(usersService, jwtService) {
         this.usersService = usersService;
         this.jwtService = jwtService;
@@ -68,12 +70,21 @@ let AuthService = class AuthService {
         });
     }
     async register(data) {
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-        const user = await this.usersService.create({
-            email: data.email.trim().toLowerCase(),
-            password: hashedPassword,
-        });
-        return this.issueToken(user);
+        try {
+            const hashedPassword = await bcrypt.hash(data.password, 10);
+            const user = await this.usersService.create({
+                email: data.email.trim().toLowerCase(),
+                password: hashedPassword,
+            });
+            return this.issueToken(user);
+        }
+        catch (error) {
+            this.logger.error('User registration failed', error);
+            if (error instanceof common_1.ConflictException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException('Unable to create account. Please try again later.');
+        }
     }
     async login(credentials) {
         const user = await this.usersService.findByEmail(credentials.email.trim().toLowerCase());
@@ -90,7 +101,7 @@ let AuthService = class AuthService {
     }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         jwt_1.JwtService])

@@ -7,6 +7,15 @@ import {
 } from 'docx';
 import type { ResumeJson } from '../types/resume.types';
 
+function displayUrl(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^www\./i.test(t)) return `https://${t}`;
+  if (/^(linkedin\.com|github\.com|gitlab\.com)\b/i.test(t)) return `https://${t}`;
+  return t;
+}
+
 /**
  * Convert a ResumeJson into a structured DOCX buffer.
  */
@@ -25,8 +34,9 @@ export async function exportDocx(resume: ResumeJson): Promise<Buffer> {
   if (resume.basics.email) contactParts.push(resume.basics.email);
   if (resume.basics.phone) contactParts.push(resume.basics.phone);
   if (resume.basics.location) contactParts.push(resume.basics.location);
-  if (resume.basics.linkedin) contactParts.push(resume.basics.linkedin);
-  if (resume.basics.github) contactParts.push(resume.basics.github);
+  if (resume.basics.linkedin) contactParts.push(displayUrl(resume.basics.linkedin));
+  if (resume.basics.github) contactParts.push(displayUrl(resume.basics.github));
+  if (resume.basics.portfolio) contactParts.push(displayUrl(resume.basics.portfolio));
   if (contactParts.length) {
     children.push(new Paragraph({ children: [new TextRun({ text: contactParts.join(' | '), size: 18, color: '555555' })] }));
   }
@@ -80,17 +90,24 @@ export async function exportDocx(resume: ResumeJson): Promise<Buffer> {
   if (resume.experience.length) {
     children.push(new Paragraph({ text: 'Work Experience', heading: HeadingLevel.HEADING_2 }));
     for (const exp of resume.experience) {
+      const dateRange = `${exp.startDate} – ${exp.current ? 'Present' : exp.endDate}`;
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `${exp.title} — ${exp.company}`, bold: true }),
-            new TextRun({ text: `  |  ${exp.startDate} – ${exp.current ? 'Present' : exp.endDate}`, color: '555555' }),
+            new TextRun({ text: exp.title, bold: true }),
+            new TextRun({ text: `  |  ${dateRange}`, color: '555555' }),
           ],
         }),
       );
+      const companyLine: TextRun[] = [
+        new TextRun({ text: exp.company, italics: true, color: '444444' }),
+      ];
       if (exp.location) {
-        children.push(new Paragraph({ children: [new TextRun({ text: exp.location, italics: true, color: '777777' })] }));
+        companyLine.push(
+          new TextRun({ text: `  ·  ${exp.location}`, italics: true, color: '666666' }),
+        );
       }
+      children.push(new Paragraph({ children: companyLine }));
       for (const bullet of exp.bullets) {
         children.push(new Paragraph({ children: [new TextRun({ text: bullet })], bullet: { level: 0 } }));
       }

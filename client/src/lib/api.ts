@@ -13,7 +13,48 @@ export class ApiError extends Error {
 }
 
 export function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:3001';
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (!rawUrl) {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+
+    return 'http://localhost:3001';
+  }
+
+  return rawUrl.replace(/\/+$|\s+$/g, '');
+}
+
+function shouldPingRemoteApi(): boolean {
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!rawUrl) return false;
+  try {
+    const host = new URL(rawUrl).hostname.toLowerCase();
+    return host !== 'localhost' && host !== '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Pings GET /ping on the configured API every 5 minutes while this tab is open.
+ * Use when NEXT_PUBLIC_API_URL points at a hosted backend (e.g. Render) to reduce cold starts.
+ * For always-on wake, also configure an external cron to hit the same /ping URL.
+ */
+export function startApiKeepAlivePeriodic(): () => void {
+  if (typeof window === 'undefined') return () => {};
+  if (!shouldPingRemoteApi()) return () => {};
+
+  const base = getApiBaseUrl();
+  const ping = () => {
+    void fetch(`${base}/ping`, { method: 'GET', cache: 'no-store', mode: 'cors' }).catch(
+      () => undefined,
+    );
+  };
+  ping();
+  const id = window.setInterval(ping, 5 * 60 * 1000);
+  return () => window.clearInterval(id);
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {

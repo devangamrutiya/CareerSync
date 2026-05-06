@@ -133,7 +133,6 @@ Gradient background card (blue→purple glow):
 4. **Trust signals**: Privacy-first messaging, no-credit-card badge
 5. **Premium feel**: Glassmorphism, gradients, generous spacing — not a generic template
 
----
-
+--
 ### Application Name: **Applykr**
 ### Tagline: "AI-powered workflow for modern job seekers"

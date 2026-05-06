@@ -38,6 +38,9 @@ let AuthController = class AuthController {
         return;
     }
     async googleAuthCallback(req, res) {
+        if (!req.user) {
+            throw new common_1.UnauthorizedException('Google authentication failed');
+        }
         const tokenRes = this.authService.issueToken(req.user);
         const webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3000';
         const redirectUrl = `${webOrigin}/dashboard?token=${encodeURIComponent(tokenRes.access_token)}`;

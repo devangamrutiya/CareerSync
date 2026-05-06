@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { apiJson, getApiBaseUrl, getApiErrorMessage } from '@/lib/api';
+import { apiJson, getApiBaseUrl, getApiErrorMessage, startApiKeepAlivePeriodic } from '@/lib/api';
 import { getAccessToken, getAuthUser, setAccessToken, setAuthUser, signOut } from '@/lib/auth';
 
 type Job = {
@@ -93,6 +93,10 @@ function DashboardContent() {
   useEffect(() => {
     setSelectedJobIds((prev) => prev.filter((id) => jobs.some((j) => j.id === id)));
   }, [jobs]);
+
+  useEffect(() => {
+    return startApiKeepAlivePeriodic();
+  }, []);
 
   useEffect(() => {
     if (resumeCooldownUntil <= 0) {

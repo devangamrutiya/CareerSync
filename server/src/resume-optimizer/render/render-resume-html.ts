@@ -1,5 +1,14 @@
 import type { ResumeJson } from '../types/resume.types';
 
+function displayUrl(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^www\./i.test(t)) return `https://${t}`;
+  if (/^(linkedin\.com|github\.com|gitlab\.com)\b/i.test(t)) return `https://${t}`;
+  return t;
+}
+
 /**
  * Render a ResumeJson into a clean, styled HTML string
  * suitable for PDF export and preview.
@@ -8,13 +17,14 @@ export function renderResumeHtml(resume: ResumeJson): string {
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+  // Plain-text contact line (no hyperlinks) for ATS-friendly PDF text extraction
   const contactParts: string[] = [];
   if (resume.basics.email) contactParts.push(esc(resume.basics.email));
   if (resume.basics.phone) contactParts.push(esc(resume.basics.phone));
   if (resume.basics.location) contactParts.push(esc(resume.basics.location));
-  if (resume.basics.linkedin) contactParts.push(`<a href="${esc(resume.basics.linkedin)}">${esc(resume.basics.linkedin)}</a>`);
-  if (resume.basics.github) contactParts.push(`<a href="${esc(resume.basics.github)}">${esc(resume.basics.github)}</a>`);
-  if (resume.basics.portfolio) contactParts.push(`<a href="${esc(resume.basics.portfolio)}">${esc(resume.basics.portfolio)}</a>`);
+  if (resume.basics.linkedin) contactParts.push(esc(displayUrl(resume.basics.linkedin)));
+  if (resume.basics.github) contactParts.push(esc(displayUrl(resume.basics.github)));
+  if (resume.basics.portfolio) contactParts.push(esc(displayUrl(resume.basics.portfolio)));
 
   let html = `<!DOCTYPE html>
 <html lang="en">
@@ -23,19 +33,19 @@ export function renderResumeHtml(resume: ResumeJson): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(resume.basics.fullName)} - Resume</title>
 <style>
+  @page { margin: 14mm 16mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 11pt;
     line-height: 1.5;
     color: #1a1a1a;
-    padding: 40px 50px;
+    padding: 12px 8px 24px;
     max-width: 800px;
     margin: 0 auto;
   }
   h1 { font-size: 22pt; font-weight: 700; color: #111; margin-bottom: 4px; }
   .contact { font-size: 9.5pt; color: #444; margin-bottom: 16px; }
-  .contact a { color: #2563eb; text-decoration: none; }
   h2 {
     font-size: 12pt;
     font-weight: 700;
@@ -71,7 +81,7 @@ export function renderResumeHtml(resume: ResumeJson): string {
   // Header
   html += `<h1>${esc(resume.basics.fullName)}</h1>\n`;
   if (contactParts.length) {
-    html += `<div class="contact">${contactParts.join(' · ')}</div>\n`;
+    html += `<div class="contact">${contactParts.join(' | ')}</div>\n`;
   }
 
   // Summary

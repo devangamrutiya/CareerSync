@@ -9,4 +9,19 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('health')
+  getHealth(): object {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
+
+  /** Ultra-light endpoint for external cron / uptime pings (e.g. Render free tier wake). No DB. */
+  @Get('ping')
+  getPing(): { ok: true } {
+    return { ok: true };
+  }
 }
